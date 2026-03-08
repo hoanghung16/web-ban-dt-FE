@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 const UsersPage = () => {
@@ -121,7 +122,11 @@ const UsersPage = () => {
                 users.map(user => (
                   <tr key={user.id} className="hover:bg-zinc-800/30 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap font-mono text-zinc-500">#{user.id}</td>
-                    <td className="px-6 py-4 font-medium text-white">{user.name}</td>
+                    <td className="px-6 py-4 font-medium text-white">
+                      <Link to={`/users/${user.id}`} className="hover:text-blue-400 hover:underline transition-colors">
+                        {user.name}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-zinc-400">{user.email}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium border ${user.role === 'Admin' ? 'bg-blue-900/30 text-blue-400 border-blue-800/50' : 'bg-zinc-800 text-zinc-300 border-zinc-700'}`}>
