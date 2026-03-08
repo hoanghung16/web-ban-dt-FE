@@ -1,16 +1,31 @@
-# React + Vite
+# THE KING Store - Frontend (React + Vite + TailwindCSS)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Đây là giao diện Frontend phong cách Dark Mode độc quyền của thương hiệu THE KING Store.
+Dự án kết nối trực tiếp với Laravel Backend thông qua Axios.
 
-Currently, two official plugins are available:
+## Cấu trúc Routing (React Router v6)
+- `/` : **HomePage** - Landing page giới thiệu hệ thống với thành phần Hero sáng tạo và Bento Grid nổi bật.
+- `/users` : **UsersPage** - Bảng dữ liệu quản trị tĩnh (Admin UI), hiển thị chi tiết danh sách người dùng được lấy từ Backend thông qua API `/api/users`. Tích hợp đầy đủ các form Thêm, Sửa, Xóa.
+- `/users/:id` : **UserDetailPage** - Trang thông tin chi tiết một người dùng cụ thể. Lấy dữ liệu từ API `/api/users/{id}`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Cấu hình API Endpoint
+Cấu hình tại file `src/services/api.js`. Điểm chốt `baseURL` đang trỏ đến Backend production trên nền tảng Render: `https://web-ban-dt-be.onrender.com`.
 
-## React Compiler
+## Cài đặt & Chạy cục bộ
+1. Cài đặt các thư viện:
+   ```bash
+   npm install
+   ```
+2. Khởi động môi trường Dev:
+   ```bash
+   npm run dev
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Deploy trên Render (Static Site)
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Chú ý phần thiết lập **Rewrite / Redirect Rules** trên Render:
+  - Source: `/*`
+  - Destination: `/index.html`
+  - Action: `Rewrite`
+  *(Biện pháp này để tránh lỗi React Router trả về 404 khi truy cập một link con bất kỳ trên trình duyệt.)*
