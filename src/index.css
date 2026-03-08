@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-king-bg: #09090b; /* zinc-950 */
+  --color-king-card: #18181b; /* zinc-900 */
+  --color-king-border: #27272a; /* zinc-800 */
+  --color-king-text: #f4f4f5; /* zinc-100 */
+  --color-king-muted: #a1a1aa; /* zinc-400 */
+  --color-king-accent: #3b82f6; /* blue-500 */
+  --color-king-accent-hover: #2563eb; /* blue-600 */
+}
+
+/* Thêm hiệu ứng đặc biệt toàn cục */
+@layer base {
+  body {
+    @apply bg-king-bg text-king-text font-sans antialiased selection:bg-king-accent selection:text-white;
+  }
+}
+
+/* Các utilities cho class kính mờ và gradient mượt */
+@layer utilities {
+  .glass {
+    @apply bg-king-card/60 backdrop-blur-md border border-king-border/50;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent;
+  }
+}
