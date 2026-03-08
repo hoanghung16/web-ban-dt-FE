@@ -11,7 +11,7 @@ const UsersPage = () => {
       try {
         setLoading(true);
         // Gọi API backend (route GET /api/users)
-        const response = await api.get('/users'); 
+        const response = await api.get('/api/users'); 
         setUsers(response || []);
       } catch (error) {
         console.error("Lỗi lấy dữ liệu API:", error);
