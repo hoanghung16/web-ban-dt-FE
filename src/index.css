@@ -1,29 +1,59 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 
-@theme {
-  --font-sans: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --color-king-bg: #09090b; /* zinc-950 */
-  --color-king-card: #18181b; /* zinc-900 */
-  --color-king-border: #27272a; /* zinc-800 */
-  --color-king-text: #f4f4f5; /* zinc-100 */
-  --color-king-muted: #a1a1aa; /* zinc-400 */
-  --color-king-accent: #3b82f6; /* blue-500 */
-  --color-king-accent-hover: #2563eb; /* blue-600 */
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Thêm hiệu ứng đặc biệt toàn cục */
+/* Custom base styles */
 @layer base {
   body {
-    @apply bg-king-bg text-king-text font-sans antialiased selection:bg-king-accent selection:text-white;
+    background-color: #0e0e0e;
+    color: #ffffff;
+    font-family: "Inter", sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", sans-serif;
   }
 }
 
-/* Các utilities cho class kính mờ và gradient mượt */
+/* Custom utilities */
 @layer utilities {
-  .glass {
-    @apply bg-king-card/60 backdrop-blur-md border border-king-border/50;
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   }
+
+  .glass-card {
+    background: rgba(38, 38, 38, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-nav {
+    background: rgba(14, 14, 14, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent;
+    background: linear-gradient(to right, #85adff, #00c1fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .editorial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }

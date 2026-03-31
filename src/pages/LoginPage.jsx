@@ -1,69 +1,354 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '../store/useAuthStore';
+import { showSuccess, showError } from '../store/useToastStore';
+import api from '../services/api';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [activeTab, setActiveTab] = useState('login'); // login, register, forgot
   const navigate = useNavigate();
+  const { login } = useAuthStore();
 
+  // Login State
+  const [loginData, setLoginData] = useState({
+    email: 'admin@theking.com',
+    password: ''
+  });
+
+  // Register State
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  // Forgot Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+
+  // Loading State
+  const [loading, setLoading] = useState(false);
+
+  // Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      // Kết nối tới API của Thành viên 03
-      const res = await axios.post('http://localhost:8000/api/login', { email, password });
-      
-      localStorage.setItem('auth_token', res.data.token);
-      
-      navigate('/');
+      await login(loginData.email, loginData.password);
+      showSuccess('Đăng nhập thành công! 🎉');
+      setTimeout(() => navigate('/'), 1000);
     } catch (err) {
-      console.error("Chi tiết lỗi đăng nhập:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại!");
+      const errorMsg = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại!";
+      showError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Register
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (registerData.password !== registerData.confirmPassword) {
+      showError('Mật khẩu không khớp!');
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      showError('Mật khẩu phải có ít nhất 6 ký tự!');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post('/auth/register', {
+        fullname: registerData.name,
+        email: registerData.email,
+        password: registerData.password,
+        password_confirmation: registerData.confirmPassword
+      });
+      showSuccess('Đăng ký thành công! Đang chuyển hướng...');
+      setRegisterData({ name: '', email: '', password: '', confirmPassword: '' });
+      setTimeout(() => setActiveTab('login'), 1500);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.response?.data?.errors?.email?.[0] || "Đăng ký thất bại!";
+      showError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Forgot Password
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email: forgotEmail });
+      showSuccess('Kiểm tra email của bạn để đặt lại mật khẩu!');
+      setForgotEmail('');
+      setTimeout(() => setActiveTab('login'), 2000);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Không thể gửi yêu cầu đặt lại mật khẩu!";
+      showError(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center px-4 relative">
-      
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 p-10 rounded-3xl shadow-2xl relative z-10">
-        <h2 className="text-3xl font-black text-white mb-8 text-center tracking-tighter uppercase">
-          The King <span className="text-blue-500">Auth</span>
-        </h2>
-        
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Email Address</label>
-            <input 
-              type="email" 
-              required
-              className="w-full bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-white outline-none focus:ring-2 ring-blue-500 mt-1"
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@theking.com"
-            />
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-surface-container-highest via-background to-surface-container-highest"></div>
+
+      {/* Main Card */}
+      <div className="w-full max-w-md relative z-10">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-primary to-blue-600 px-8 py-6 text-center">
+            <h1 className="text-3xl font-headline font-black text-white tracking-tighter">
+              THE KING
+            </h1>
+            <p className="text-blue-100 text-sm font-medium mt-1">Authentication System</p>
           </div>
 
-          <div>
-            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Password</label>
-            <input 
-              type="password" 
-              required
-              className="w-full bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-white outline-none focus:ring-2 ring-blue-500 mt-1"
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+          {/* Tabs */}
+          <div className="flex border-b border-white/10">
+            {[
+              { id: 'login', label: 'Đăng nhập', icon: 'login' },
+              { id: 'register', label: 'Đăng ký', icon: 'person_add' },
+              { id: 'forgot', label: 'Quên MK', icon: 'lock_reset' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-3 font-medium text-sm transition-all relative ${
+                  activeTab === tab.id 
+                    ? 'text-primary' 
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-lg">{tab.icon}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </div>
+                {activeTab === tab.id && (
+                  <motion.div 
+                    layoutId="underline"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+            ))}
           </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95"
-          >
-            SIGN IN
-          </button>
-        </form>
+          {/* Content */}
+          <div className="px-8 py-8">
+            <AnimatePresence mode="wait">
+              {/* Login Form */}
+              {activeTab === 'login' && (
+                <motion.form
+                  key="login"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleLogin}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email</label>
+                    <input 
+                      type="email" 
+                      required
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="admin@theking.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Mật khẩu</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('forgot')}
+                    className="text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Quên mật khẩu?
+                  </button>
+
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-500 disabled:opacity-50 text-on-primary-fixed font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-primary/20"
+                  >
+                    {loading ? '⏳ Đang xử lý...' : 'ĐĂNG NHẬP'}
+                  </button>
+
+                  <p className="text-center text-sm text-on-surface-variant">
+                    Chưa có tài khoản?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('register')}
+                      className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                    >
+                      Đăng ký ngay
+                    </button>
+                  </p>
+                </motion.form>
+              )}
+
+              {/* Register Form */}
+              {activeTab === 'register' && (
+                <motion.form
+                  key="register"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleRegister}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Tên đầy đủ</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={registerData.name}
+                      onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email</label>
+                    <input 
+                      type="email" 
+                      required
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Mật khẩu</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Xác nhận mật khẩu</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={registerData.confirmPassword}
+                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-500 disabled:opacity-50 text-on-primary-fixed font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-primary/20"
+                  >
+                    {loading ? '⏳ Đang xử lý...' : 'ĐĂNG KÝ'}
+                  </button>
+
+                  <p className="text-center text-sm text-on-surface-variant">
+                    Đã có tài khoản?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('login')}
+                      className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                    >
+                      Đăng nhập
+                    </button>
+                  </p>
+                </motion.form>
+              )}
+
+              {/* Forgot Password Form */}
+              {activeTab === 'forgot' && (
+                <motion.form
+                  key="forgot"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleForgotPassword}
+                  className="space-y-5"
+                >
+                  <p className="text-sm text-on-surface-variant">
+                    Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
+                  </p>
+
+                  <div>
+                    <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email</label>
+                    <input 
+                      type="email" 
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-500 disabled:opacity-50 text-on-primary-fixed font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-primary/20"
+                  >
+                    {loading ? '⏳ Đang xử lý...' : 'GỬI HƯỚNG DẪN'}
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('login')}
+                    className="w-full text-primary hover:text-primary/80 font-semibold py-2 transition-colors"
+                  >
+                    Quay lại đăng nhập
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-white/10 px-8 py-4 text-center text-xs text-on-surface-variant">
+            <p>© 2026 The King - Luxury Mobile Marketplace</p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
 };
 
-// Đảm bảo chỉ export duy nhất component này
 export default LoginPage;

@@ -1,71 +1,140 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import ProductCard from './ProductCard';
 
 const BentoGrid = () => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch products from API
+    const fetchProducts = async () => {
+      try {
+        const data = await api.get('/products?limit=6');
+        // Response là pagination object: {data: [...], links: {...}, meta: {...}}
+        const productsArray = Array.isArray(data) ? data : (data.data || []);
+        setProducts(productsArray.slice(0, 6));
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleCategoryClick = (category) => {
+    navigate(`/products?category=${category}`);
   };
 
-  const item = {
-    hidden: { opacity: 0, scale: 0.95, y: 20 },
-    show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 20 } }
+  const itemFadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80 } }
   };
 
   return (
-    <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex items-end justify-between mb-10">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Danh mục Nổi bật</h2>
-          <p className="text-zinc-400">Xu hướng công nghệ được yêu thích nhất.</p>
-        </div>
-      </div>
-      
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-50px" }}
-        className="grid grid-cols-1 md:grid-cols-4 grid-rows-[300px_300px] gap-6"
-      >
-        {/* iPhone Banner - Large */}
-        <motion.div variants={item} className="md:col-span-2 md:row-span-2 glass rounded-3xl p-8 relative overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-colors">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent z-0"></div>
-          <h3 className="text-3xl font-bold mb-2 z-10 relative">iPhone 15 Series</h3>
-          <p className="text-zinc-400 z-10 relative">Titanium Đẳng Cấp. Đột Phá.</p>
-          <img src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&q=80&w=800" alt="iPhone 15" className="absolute bottom-0 right-[-10%] w-[90%] md:w-[80%] object-contain translate-y-12 group-hover:translate-y-8 group-hover:scale-105 transition-all duration-700 ease-out brightness-90 group-hover:brightness-100" />
-        </motion.div>
-        
-        {/* Android Banner */}
-        <motion.div variants={item} className="md:col-span-2 glass rounded-3xl p-8 relative overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-colors">
-          <h3 className="text-2xl font-bold mb-2">Android Flagship</h3>
-          <p className="text-zinc-400">Đỉnh cao hiệu năng. Trải nghiệm vô tận.</p>
-        </motion.div>
-        
-        {/* Accessories */}
-        <motion.div variants={item} className="glass rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-colors">
-          <h3 className="text-xl font-bold z-10">Phụ kiện</h3>
-          <div className="text-zinc-400 z-10 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">Khám phá →</div>
-        </motion.div>
-        
-        {/* Sale Block */}
-        <motion.div variants={item} className="glass rounded-3xl p-6 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 flex flex-col justify-center items-center cursor-pointer hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all">
-          <motion.div 
-            animate={{ rotate: [0, -10, 10, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 2, repeatDelay: 1 }}
-            className="text-5xl"
+    <section className="py-24 bg-background">
+      <div className="max-w-screen-2xl mx-auto px-6">
+        {/* Product Collection Header */}
+        <div className="flex justify-between items-end mb-16">
+          <div>
+            <h2 className="font-headline text-3xl font-extrabold tracking-tight mb-2 uppercase">
+              Bộ sưu tập MỚI NHẤT
+            </h2>
+            <div className="h-1 w-20 bg-secondary rounded-full"></div>
+          </div>
+          <button 
+            onClick={() => navigate('/products')}
+            className="text-primary font-medium hover:underline transition-all"
           >
-            🔥
-          </motion.div>
-          <h3 className="text-xl font-bold mt-3 text-white">Sale Tới Bến</h3>
-          <p className="text-sm text-blue-300 mt-1">Lên đến 50%</p>
-        </motion.div>
-      </motion.div>
+            Xem tất cả sản phẩm
+          </button>
+        </div>
+
+        {/* Product Grid */}
+        {!loading && products.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {products.map((product, index) => (
+              <motion.div
+                key={product.id}
+                variants={itemFadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Skeleton loaders */}
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-surface-container-high rounded-3xl h-96 animate-pulse"></div>
+            ))}
+          </div>
+        )}
+
+        {/* Trade-in Banner Section */}
+        <section className="py-12 mt-24">
+          <div className="relative rounded-2xl overflow-hidden bg-primary-container p-8 md:p-16 flex flex-col md:flex-row items-center gap-12">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-dim to-secondary opacity-20"></div>
+            <div className="relative z-10 flex-1">
+              <h2 className="font-headline text-4xl font-extrabold text-on-primary-container mb-4">
+                CHƯƠNG TRÌNH THU CŨ ĐỔI MỚI
+              </h2>
+              <p className="text-on-primary-container/80 text-lg mb-8 max-w-xl">
+                Nâng cấp lên flagship đời mới nhất với trợ giá cực khủng lên đến 5.000.000đ. Thủ tục nhanh chóng chỉ trong 15 phút.
+              </p>
+              <button 
+                onClick={() => navigate('/trade-in')}
+                className="px-8 py-4 bg-on-primary-fixed text-primary rounded-xl font-bold shadow-xl hover:scale-105 transition-transform"
+              >
+                Định Giá Máy Ngay
+              </button>
+            </div>
+            <div className="relative z-10 flex-1 hidden md:block">
+              <img 
+                className="rounded-2xl shadow-2xl rotate-3" 
+                alt="Two high-end smartphones"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAIMIQDCgh4UsdOOZSQlzcGexeWLXg_51FRQVvc9D6qjPwO2r3Gs02Y6tEgQ_g0HHjYJc7VOeF1lR7-I3JMJxNXc9EnKzRcXqJGUNKfOM_VgmeWfyd8-D9vylLGo9-tJZdHAnh1ZJ2Qg_c-dM6rkCWizbYd9Uwd8pWUm7lJWaeX2JR9xryOsqDYT1tdWyROLmnEKJZLZ99PPybxsrWVTdUuYF4IuAv9EHUSfxew8YXg4BEGPKVFrgkpZMq38qlpXQ8ZONdSvfe2VQ"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Brand Categories */}
+        <section className="py-20 bg-surface-container-low mt-12 -mx-6 px-6">
+          <div className="max-w-screen-2xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-8 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+              {[
+                { icon: 'ios', name: 'Apple', brand: 'Apple' },
+                { icon: 'smartphone', name: 'Samsung', brand: 'Samsung' },
+                { icon: 'terminal', name: 'Xiaomi', brand: 'Xiaomi' },
+                { icon: 'diamond', name: 'Vertu', brand: 'Vertu' },
+                { icon: 'watch', name: 'Garmin', brand: 'Garmin' }
+              ].map((item, index) => (
+                <motion.div 
+                  key={index}
+                  whileHover={{ scale: 1.1 }}
+                  onClick={() => handleCategoryClick(item.brand)}
+                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-4xl group-hover:text-primary transition-colors">
+                    {item.icon}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold">{item.name}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
     </section>
   );
 };

@@ -1,46 +1,54 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
-    <div className="relative pt-32 pb-20 sm:pt-40 sm:pb-24 overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-blue-600/10 blur-[120px] rounded-full -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-indigo-600/10 blur-[100px] rounded-full -z-10"></div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-block mb-4 px-4 py-1.5 rounded-full border border-zinc-800 bg-zinc-900/50 text-sm text-zinc-400 backdrop-blur-sm"
-          >
-            ✨ Ra mắt Bộ sưu tập Mùa Hè 2026
-          </motion.div>
+    <section className="relative h-[600px] md:h-[921px] flex items-center overflow-hidden bg-surface-container-lowest pt-16">
+      <div className="absolute inset-0 z-0">
+        <img 
+          className="w-full h-full object-cover opacity-60 scale-105" 
+          alt="Flagship smartphone with dramatic blue rim lighting"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqgr0GIfHfqd-bKJt_sRjeDnw5F3aUiOwRbhmsXZ13VgNdz5qLByHDrtH48FKdA_fLMLPP-KHeRa_Bx3A-LsnscUICq6rzdrKU18g6IDzqr0ccj-vT5rZWgz4Ut6HQmAvSwZaJNdhiTYmLfg80RBrHtqiBz4iQW3b5EeXRTdcMDiYVWAf9bUwGqY_a9Zi9b5k31SNVLXDpn1jxgrrZMhrOFNSA76250qCYFZbAHVHMCBcIqEvi2D3Jx3VXwYNMO-pGI5OrpZi_WBY"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+      </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-            Khám phá <span className="text-gradient">Tinh Hoa</span><br />
-            Công Nghệ Mới
+      <div className="relative z-10 max-w-screen-2xl mx-auto px-6 w-full">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-2xl"
+        >
+          <span className="inline-block py-1 px-4 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase mb-6">
+            Flagship Thế Hệ Mới
+          </span>
+          
+          <h1 className="font-headline text-5xl md:text-8xl font-extrabold tracking-tighter mb-8 leading-[0.9]">
+            THE DIGITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">SOVEREIGN</span>
           </h1>
-          <p className="mt-4 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Trải nghiệm không gian mua sắm đẳng cấp với các dòng smartphone cao cấp nhất. Mượt mà, tinh tế và dẫn đầu xu hướng tương lai.
+          
+          <p className="text-on-surface-variant text-lg md:text-xl max-w-lg mb-10 font-light leading-relaxed">
+            Định nghĩa lại quyền năng công nghệ. iPhone 15 Pro với khung Titanium cấp độ hàng không vũ trụ.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-medium transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-              Khám phá ngay
-            </button>
-            <button className="w-full sm:w-auto glass hover:bg-zinc-800/80 text-white px-8 py-3.5 rounded-full font-medium transition-all">
-              Tìm hiểu thêm
+          
+          <div className="flex flex-wrap gap-4">
+            <Link 
+              to="/products"
+              className="px-8 py-4 bg-gradient-to-r from-primary-dim to-secondary rounded-xl font-bold text-white shadow-[0_0_20px_rgba(0,193,253,0.3)] hover:scale-105 transition-transform active:scale-95"
+            >
+              Mua Ngay
+            </Link>
+            
+            <button className="px-8 py-4 glass-card border border-outline-variant/20 rounded-xl font-bold text-white hover:bg-white/10 transition-colors active:scale-95">
+              Khám Phá
             </button>
           </div>
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 };
 
