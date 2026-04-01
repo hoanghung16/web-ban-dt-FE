@@ -9,6 +9,10 @@ const AdminUserForm = () => {
   const isEditMode = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState({
+    password: false,
+    confirmPassword: false
+  });
   const [formData, setFormData] = useState({
     fullname: '',
     email: '',
@@ -73,6 +77,7 @@ const AdminUserForm = () => {
       }
       if (formData.password) {
         payload.password = formData.password;
+        payload.password_confirmation = formData.confirmPassword; // Send as password_confirmation
       }
       if (formData.role) {
         payload.role = formData.role;
@@ -107,7 +112,16 @@ const AdminUserForm = () => {
     } catch (error) {
       console.error("Lỗi lưu người dùng:", error);
       console.error("Error response:", error.response?.data);
-      alert(error.response?.data?.message || JSON.stringify(error.response?.data?.errors) || "Có lỗi xảy ra, vui lòng thử lại.");
+      
+      // Handle specific validation errors
+      const errorData = error.response?.data;
+      if (errorData?.errors) {
+        const firstErrorKey = Object.keys(errorData.errors)[0];
+        const errorMsg = errorData.errors[firstErrorKey]?.[0] || errorData.message;
+        alert(errorMsg);
+      } else {
+        alert(errorData?.message || "Có lỗi xảy ra, vui lòng thử lại.");
+      }
     } finally {
       setLoading(false);
     }
@@ -179,27 +193,49 @@ const AdminUserForm = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Mật khẩu{!isEditMode ? ' *' : ''}</label>
-                <input
-                  type="password"
-                  name="password"
-                  required={!isEditMode}
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder={isEditMode ? "Để trống nếu không thay đổi" : "Nhập mật khẩu mới"}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword.password ? 'text' : 'password'}
+                    name="password"
+                    required={!isEditMode}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={isEditMode ? "Để trống nếu không thay đổi" : "Nhập mật khẩu mới"}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, password: !showPassword.password })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword.password ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Xác nhận Mật khẩu{!isEditMode ? ' *' : ''}</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  required={!isEditMode}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder={isEditMode ? "Để trống nếu không thay đổi" : "Xác nhận mật khẩu"}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword.confirmPassword ? 'text' : 'password'}
+                    name="confirmPassword"
+                    required={!isEditMode}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder={isEditMode ? "Để trống nếu không thay đổi" : "Xác nhận mật khẩu"}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, confirmPassword: !showPassword.confirmPassword })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword.confirmPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

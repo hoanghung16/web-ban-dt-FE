@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, Truck, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../utils/imageHelper';
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -152,7 +153,7 @@ const OrderConfirmation = () => {
             {orderData.items.map((item, i) => (
               <div key={i} className="flex items-center gap-4 pb-4 border-b border-white/10">
                 <div className="w-16 h-16 bg-white/5 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <img src={item.imageUrl ? (item.imageUrl.startsWith('/') ? `http://localhost:8000${item.imageUrl}` : `http://localhost:8000/images/products/${item.imageUrl}`) : (item.image || item.img)} alt={item.name} className="max-w-full max-h-full object-contain" />
+                    <img src={getImageUrl(item.imageUrl)} alt={item.name} className="max-w-full max-h-full object-contain" />
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-white">{item.name}</p>
@@ -174,8 +175,14 @@ const OrderConfirmation = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          className="flex gap-4"
+          className="flex gap-4 flex-col md:flex-row"
         >
+          <button 
+            onClick={() => navigate('/orders')}
+            className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-xl transition-all"
+          >
+            📦 Theo dõi đơn hàng
+          </button>
           <button 
             onClick={() => navigate('/')}
             className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all"

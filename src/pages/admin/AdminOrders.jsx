@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
-import { Eye, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from '../../constants';
 import { formatDate, formatPrice } from '../../utils/helpers';
 
@@ -11,11 +11,13 @@ const AdminOrders = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const params = statusFilter ? { status: statusFilter } : {};
+      const params = statusFilter ? { status: statusFilter, limit: 1000 } : { limit: 1000 };
       const response = await api.get('/orders', { params });
       setOrders(Array.isArray(response) ? response : (response.data || []));
     } catch (error) {
@@ -77,12 +79,21 @@ const AdminOrders = () => {
     const searchLower = searchTerm.toLowerCase();
     return (
       order.id.toString().includes(searchTerm) ||
-      order.user?.name?.toLowerCase().includes(searchLower) ||
+      order.user?.fullname?.toLowerCase().includes(searchLower) ||
       order.user?.email?.toLowerCase().includes(searchLower) ||
       order.shipname?.toLowerCase().includes(searchLower) ||
       order.shipphone?.includes(searchTerm)
     );
   });
+
+  // Phân trang
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   return (
     <div className="space-y-6">
@@ -149,7 +160,7 @@ const AdminOrders = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => {
+                  paginatedOrders.map((order) => {
                     const statAttr = { ...ORDER_STATUS_COLORS[order.status], label: ORDER_STATUS_LABELS[order.status] } || { bg: 'bg-gray-100', text: 'text-gray-700', label: order.status };
                     const payStatAttr = { ...PAYMENT_STATUS_COLORS[order.paymentstatus], label: PAYMENT_STATUS_LABELS[order.paymentstatus] } || { bg: 'bg-gray-100', text: 'text-gray-700', label: order.paymentstatus };
                     
@@ -158,7 +169,7 @@ const AdminOrders = () => {
                         <td className="px-6 py-4 font-bold text-slate-800">#{order.id}</td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-medium text-slate-800">{order.user?.name || 'N/A'}</p>
+                            <p className="font-medium text-slate-800">{order.user?.fullname || 'N/A'}</p>
                             <p className="text-xs text-slate-500">{order.user?.email || 'N/A'}</p>
                           </div>
                         </td>
@@ -204,6 +215,48 @@ const AdminOrders = () => {
             </table>
           )}
         </div>
+
+        {/* Pagination */}
+        {filteredOrders.length > 0 && (
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến <span className="font-semibold">{Math.min(startIndex + itemsPerPage, filteredOrders.length)}</span> trong <span className="font-semibold">{filteredOrders.length}</span> kết quả
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      page === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Order Detail Modal */}
@@ -232,7 +285,7 @@ const AdminOrders = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-500 uppercase font-semibold">Khách hàng</p>
-                  <p className="text-sm font-bold text-slate-800 mt-1">{selectedOrder.user?.name}</p>
+                  <p className="text-sm font-bold text-slate-800 mt-1">{selectedOrder.user?.fullname}</p>
                   <p className="text-sm text-slate-600">{selectedOrder.user?.email}</p>
                 </div>
                 <div>

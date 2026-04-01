@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Plus, Edit, Trash2, Search, Shield, User as UserIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Shield, User as UserIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +18,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users');
+      const response = await api.get('/users', { params: { limit: 1000 } });
       setUsers(Array.isArray(response) ? response : (response.data || []));
     } catch (error) {
       console.error("Lỗi lấy danh sách người dùng:", error);
@@ -34,6 +37,25 @@ const AdminUsers = () => {
         alert("Không thể xóa người dùng này. Có thể liên quan đến các dữ liệu khác.");
       }
     }
+  };
+
+  // Lọc người dùng theo search term
+  const filteredUsers = users.filter(user => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.id.toString().includes(searchTerm) ||
+      user.fullname?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Phân trang
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   return (
@@ -56,6 +78,8 @@ const AdminUsers = () => {
             <input
               type="text"
               placeholder="Tìm kiếm người dùng qua tên hoặc email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -76,22 +100,22 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
                       Không tìm thấy người dùng
                     </td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  paginatedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 ${user.role === 'admin' ? 'bg-indigo-500' : 'bg-slate-400'}`}>
-                            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            {user.fullname ? user.fullname.charAt(0).toUpperCase() : 'U'}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800">{user.name || 'N/A'}</p>
+                            <p className="text-sm font-bold text-slate-800">{user.fullname || 'N/A'}</p>
                             <p className="text-xs text-slate-500">ID: #{user.id}</p>
                           </div>
                         </div>
@@ -147,6 +171,48 @@ const AdminUsers = () => {
             </table>
           )}
         </div>
+
+        {/* Pagination */}
+        {filteredUsers.length > 0 && (
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến <span className="font-semibold">{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> trong <span className="font-semibold">{filteredUsers.length}</span> kết quả
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      page === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

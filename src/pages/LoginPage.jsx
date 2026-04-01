@@ -12,7 +12,7 @@ const LoginPage = () => {
 
   // Login State
   const [loginData, setLoginData] = useState({
-    email: 'admin@theking.com',
+    email: '',
     password: ''
   });
 
@@ -29,6 +29,14 @@ const LoginPage = () => {
 
   // Loading State
   const [loading, setLoading] = useState(false);
+
+  // Show Password State
+  const [showPassword, setShowPassword] = useState({
+    login: false,
+    register: false,
+    registerConfirm: false,
+    forgot: false
+  });
 
   // Handle Login
   const handleLogin = async (e) => {
@@ -169,20 +177,31 @@ const LoginPage = () => {
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                      placeholder="admin@theking.com"
+                      placeholder="Tên đăng nhập hoặc email"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Mật khẩu</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword.login ? 'text' : 'password'} 
+                        required
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, login: !showPassword.login })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-xl">
+                          {showPassword.login ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   <button 
@@ -251,26 +270,48 @@ const LoginPage = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Mật khẩu</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword.register ? 'text' : 'password'} 
+                        required
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, register: !showPassword.register })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-xl">
+                          {showPassword.register ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Xác nhận mật khẩu</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                      className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword.registerConfirm ? 'text' : 'password'} 
+                        required
+                        value={registerData.confirmPassword}
+                        onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, registerConfirm: !showPassword.registerConfirm })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-xl">
+                          {showPassword.registerConfirm ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   <button 

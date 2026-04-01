@@ -24,6 +24,13 @@ const ProfilePage = () => {
     password_confirmation: ''
   });
 
+  // Show Password State
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+
   // Initialize profile data
   useEffect(() => {
     if (!isAuthenticated) {
@@ -82,8 +89,20 @@ const ProfilePage = () => {
         password_confirmation: ''
       });
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.response?.data?.errors?.current_password?.[0] || 'Không thể thay đổi mật khẩu';
-      showError(errorMsg);
+      // Handle different error scenarios
+      const response = err.response?.data;
+      
+      // Check if it's a validation error (Laravel returns errors object)
+      if (response?.errors) {
+        // Get first error from validation errors
+        const firstErrorKey = Object.keys(response.errors)[0];
+        const errorMsg = response.errors[firstErrorKey]?.[0] || response.message || 'Không thể thay đổi mật khẩu';
+        showError(errorMsg);
+      } else {
+        // Fallback to message field or generic error
+        const errorMsg = response?.message || err.message || 'Không thể thay đổi mật khẩu';
+        showError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -115,15 +134,22 @@ const ProfilePage = () => {
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex gap-4 mb-8 border-b border-outline-variant/20">
+      <div className="flex gap-4 mb-8 border-b border-outline-variant/20 overflow-x-auto">
         {[
           { id: 'profile', label: 'Thông tin cá nhân', icon: 'person' },
-          { id: 'password', label: 'Đổi mật khẩu', icon: 'lock' }
+          { id: 'password', label: 'Đổi mật khẩu', icon: 'lock' },
+          { id: 'orders', label: 'Đơn hàng', icon: 'local_shipping' }
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all border-b-2 ${
+            onClick={() => {
+              if (tab.id === 'orders') {
+                navigate('/orders');
+              } else {
+                setActiveTab(tab.id);
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all border-b-2 whitespace-nowrap ${
               activeTab === tab.id
                 ? 'border-primary text-primary'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
@@ -220,14 +246,25 @@ const ProfilePage = () => {
                 <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">
                   Mật khẩu hiện tại
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.current_password}
-                  onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
-                  className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                  placeholder="Nhập mật khẩu hiện tại"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword.current ? 'text' : 'password'}
+                    required
+                    value={passwordData.current_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword.current ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* New Password */}
@@ -235,14 +272,25 @@ const ProfilePage = () => {
                 <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">
                   Mật khẩu mới
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.password}
-                  onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
-                  className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                  placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword.new ? 'text' : 'password'}
+                    required
+                    value={passwordData.password}
+                    onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword.new ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Confirm Password */}
@@ -250,14 +298,25 @@ const ProfilePage = () => {
                 <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">
                   Xác nhận mật khẩu mới
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.password_confirmation}
-                  onChange={(e) => setPasswordData({ ...passwordData, password_confirmation: e.target.value })}
-                  className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all"
-                  placeholder="Xác nhận mật khẩu mới"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword.confirm ? 'text' : 'password'}
+                    required
+                    value={passwordData.password_confirmation}
+                    onChange={(e) => setPasswordData({ ...passwordData, password_confirmation: e.target.value })}
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 focus:border-primary p-3 rounded-xl text-on-surface outline-none focus:ring-1 focus:ring-primary transition-all pr-12"
+                    placeholder="Xác nhận mật khẩu mới"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword.confirm ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Info Box */}

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
+import api from '../services/api';
 
 const MotionNav = motion.nav;
 const MotionDiv = motion.div;
@@ -10,6 +11,7 @@ const MotionDiv = motion.div;
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -18,19 +20,35 @@ const Navbar = () => {
   
   const { user, isAuthenticated, logout } = useAuthStore();
 
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        const categoriesData = Array.isArray(response) ? response : (response.data || []);
+        const formattedCategories = categoriesData.map(cat => ({
+          name: cat.name,
+          path: `/products?category=${cat.slug || cat.id}`
+        }));
+        setCategories(formattedCategories);
+      } catch (error) {
+        console.error('Lỗi fetch categories:', error);
+        // Fallback to default categories
+        setCategories([
+          { name: 'iPhone', path: '/products?category=iphone' },
+          { name: 'Samsung', path: '/products?category=samsung' },
+          { name: 'Phụ Kiện', path: '/products?category=phụ kiện' },
+        ]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/');
     setIsOpen(false);
   };
-
-  const categories = [
-    { name: 'iPhone', path: '/products?category=iphone' },
-    { name: 'Samsung', path: '/products?category=samsung' },
-    { name: 'MacBook', path: '/products?category=macbook' },
-    { name: 'iPad', path: '/products?category=ipad' },
-    { name: 'Watch', path: '/products?category=watch' },
-  ];
 
   return (
     <MotionNav 
@@ -47,6 +65,11 @@ const Navbar = () => {
 
         {/* Desktop Layout: Danh mục Dropdown | Search | Cart | Login */}
         <div className="hidden md:flex items-center gap-6 flex-1">
+          {/* About Link */}
+          <Link to="/about" className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-on-surface hover:text-white font-medium text-sm">
+            Về Chúng Tôi
+          </Link>
+
           {/* Categories Dropdown */}
           <div className="relative group flex-shrink-0">
             <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-on-surface hover:text-white">
@@ -132,6 +155,15 @@ const Navbar = () => {
                     Hồ sơ cá nhân
                   </Link>
 
+                  {/* Order Tracking */}
+                  <Link 
+                    to="/orders" 
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-surface-container-high text-on-surface font-medium text-sm transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-base">local_shipping</span>
+                    Đơn hàng của tôi
+                  </Link>
+
                   {/* Admin Dashboard */}
                   {user?.role && (user?.role.toLowerCase() === 'admin' || user?.role.toLowerCase() === 'administrator') && (
                     <Link 
@@ -196,6 +228,13 @@ const Navbar = () => {
               {/* Mobile Categories */}
               <div className="space-y-2 border-t border-outline-variant/20 pt-4">
                 <p className="text-sm font-medium text-on-surface-variant px-3">Danh mục</p>
+                <Link
+                  to="/about"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2 text-on-surface hover:text-white hover:bg-surface-container rounded-lg transition-colors"
+                >
+                  Về Chúng Tôi
+                </Link>
                 {categories.map((cat) => (
                   <Link
                     key={cat.path}
@@ -235,6 +274,16 @@ const Navbar = () => {
                   >
                     <span className="material-symbols-outlined">person</span>
                     Hồ sơ cá nhân
+                  </Link>
+                  
+                  {/* Order Tracking */}
+                  <Link 
+                    to="/orders" 
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-surface-container-high text-on-surface font-medium text-sm transition-colors"
+                  >
+                    <span className="material-symbols-outlined">local_shipping</span>
+                    Đơn hàng của tôi
                   </Link>
                   
                   {/* Admin Dashboard */}

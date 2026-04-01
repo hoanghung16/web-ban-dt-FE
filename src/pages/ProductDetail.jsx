@@ -4,6 +4,7 @@ import { ShoppingCart, Heart, Share2, Star, Plus, Minus, Loader } from 'lucide-r
 import { motion } from 'framer-motion';
 import { useCartStore } from '../store/useCartStore';
 import { showSuccess, showError } from '../store/useToastStore';
+import { getImageUrl } from '../utils/imageHelper';
 import api from '../services/api';
 
 const ProductDetail = () => {
@@ -98,12 +99,13 @@ const ProductDetail = () => {
             className="bg-zinc-900/30 rounded-2xl p-8 border border-white/10 flex items-center justify-center min-h-96"
           >
             <div className="w-full h-96 flex items-center justify-center">
-                <img src={product.imageUrl ? `http://localhost:8000${product.imageUrl}` : (product.image || product.img)} alt={product.name} className="max-w-full max-h-full object-contain" />
+                <img src={getImageUrl(product.imageUrl)} alt={product.name} className="max-w-full max-h-full object-contain" />
             </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
           >
             
             {/* Tag & Category */}
@@ -228,7 +230,7 @@ const ProductDetail = () => {
                   className="bg-zinc-900/30 border border-white/10 rounded-2xl p-5 cursor-pointer hover:border-blue-500/30 transition-all"
                 >
                   <div className="aspect-square bg-white/5 rounded-xl flex items-center justify-center mb-4">
-                      <img src={rel.imageUrl ? `http://localhost:8000${rel.imageUrl}` : (rel.image || rel.img)} alt={rel.name} className="max-w-full max-h-full object-contain p-4" />
+                      <img src={getImageUrl(rel.imageUrl || rel.image || rel.img)} alt={rel.name} className="max-w-full max-h-full object-contain p-4" />
                   </div>
                   <h3 className="font-bold text-sm mb-2 line-clamp-2">{rel.name}</h3>
                   <p className="text-blue-400 font-black">{rel.price}</p>

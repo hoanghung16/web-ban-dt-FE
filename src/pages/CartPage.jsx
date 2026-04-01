@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCartStore } from '../store/useCartStore';
 import { Link, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../utils/imageHelper';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const CartPage = () => {
                   <img
                     alt={item.name}
                     className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-500"
-                      src={item.imageUrl ? (item.imageUrl.startsWith('/') ? `http://localhost:8000${item.imageUrl}` : `http://localhost:8000/images/products/${item.imageUrl}`) : (item.image || item.img)}
+                      src={getImageUrl(item.imageUrl)}
                   />
                 </div>
                 
