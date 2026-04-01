@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { showSuccess, showError } from '../store/useToastStore';
+import { formatErrorMessage, logApiError } from '../utils/errorHandler';
 import { ArrowRight, Check, Truck, CreditCard, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../services/api';
@@ -9,8 +11,17 @@ import api from '../services/api';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, clearCart } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(1); // 1: Shipping, 2: Payment, 3: Confirm
   const [loading, setLoading] = useState(false);
+
+  // Nếu chưa đăng nhập, redirect đến login
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      showError('Vui lòng đăng nhập để thanh toán');
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Form states
   const [shipping, setShipping] = useState({
@@ -67,27 +78,48 @@ const CheckoutPage = () => {
   const handleSubmitOrder = async () => {
     setLoading(true);
     try {
-      // Chuẩn bị dữ liệu order
+      if (!user?.id) {
+        showError('Lỗi: Không tìm thấy thông tin người dùng');
+        setLoading(false);
+        return;
+      }
+
+      // Chuẩn bị dữ liệu order - PHẢI MATCH VỚI BACKEND FIELD NAMES
       const orderPayload = {
-        customer_name: shipping.fullName,
-        customer_email: shipping.email,
-        customer_phone: shipping.phone,
-        shipping_address: shipping.address,
-        shipping_city: shipping.city,
-        shipping_district: shipping.district,
-        payment_method: payment.method,
-        items: cart.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          price: typeof item.price === 'string' ? parseInt(item.price.replace(/\D/g, '')) : item.price
-        })),
-        total_amount: final_price
+        userid: user.id,
+        shipname: shipping.fullName,
+        shipaddress: shipping.address,
+        shipphone: shipping.phone,
+        totalprice: final_price,
+        status: 'pending',
+        paymentstatus: payment.method === 'cod' ? 'unpaid' : 'unpaid'
       };
 
       // Gửi order đến API
       const response = await api.post('/orders', orderPayload);
-      const orderId = response.data?.id || response.id || `ORD-${Date.now()}`;
+      const orderId = response.data?.id || response.id;
       
+      if (!orderId) {
+        showError('Lỗi: Không tạo được đơn hàng');
+        setLoading(false);
+        return;
+      }
+
+      // Sau khi tạo order, thêm từng item vào order
+      for (const item of cart) {
+        try {
+          await api.post('/order-items', {
+            orderid: orderId,
+            productid: item.id,
+            quantity: item.quantity,
+            unitprice: typeof item.price === 'string' ? parseInt(item.price.replace(/\D/g, '')) : item.price
+          });
+        } catch (itemErr) {
+          logApiError(itemErr, 'CheckoutPage.createOrderItem');
+          // Tiếp tục tạo items khác nếu cái này lỗi
+        }
+      }
+
       showSuccess('Đặt hàng thành công! 🎉');
       
       // Xóa giỏ hàng
@@ -109,8 +141,11 @@ const CheckoutPage = () => {
         });
       }, 1500);
     } catch (err) {
-      console.error('Lỗi API:', err);
-      const errorMsg = err.response?.data?.message || 'Lỗi khi đặt hàng. Vui lòng thử lại!';
+      // Log lỗi chi tiết
+      logApiError(err, 'CheckoutPage.handleSubmitOrder');
+      
+      // Lấy thông báo lỗi formatted
+      const errorMsg = formatErrorMessage(err, true);
       showError(errorMsg);
     } finally {
       setLoading(false);

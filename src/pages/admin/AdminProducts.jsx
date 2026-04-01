@@ -1,24 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProducts();
+    fetchProductsAndCategories();
   }, []);
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, searchTerm]);
+
+  const fetchProductsAndCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/products');
-      setProducts(Array.isArray(response) ? response : (response.data || []));
+      const [productsRes, categoriesRes] = await Promise.all([
+        api.get('/products', { params: { limit: 1000 } }),
+        api.get('/categories', { params: { limit: 1000 } })
+      ]);
+      setProducts(Array.isArray(productsRes) ? productsRes : (productsRes.data || []));
+      setCategories(Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes.data || []));
     } catch (error) {
-      console.error("Lỗi lấy danh sách sản phẩm:", error);
+      console.error("Lỗi lấy danh sách:", error);
     } finally {
       setLoading(false);
     }
@@ -33,6 +47,27 @@ const AdminProducts = () => {
         console.error("Lỗi xóa sản phẩm:", error);
       }
     }
+  };
+
+  // Lọc sản phẩm theo search term và category
+  const filteredProducts = products.filter(product => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = (
+      product.id.toString().includes(searchTerm) ||
+      product.name?.toLowerCase().includes(searchLower) ||
+      product.category?.name?.toLowerCase().includes(searchLower)
+    );
+    const matchesCategory = !categoryFilter || product.categoryid?.toString() === categoryFilter || product.category?.id?.toString() === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Phân trang
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   return (
@@ -50,19 +85,32 @@ const AdminProducts = () => {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4 bg-slate-50/50">
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4 bg-slate-50/50 flex-wrap">
           <div className="flex-1 relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-            <Filter size={18} />
-            Lọc
-          </button>
+          <div className="flex items-center gap-2">
+            <Filter size={18} className="text-slate-400" />
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">Tất cả danh mục</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Table */}
@@ -82,14 +130,14 @@ const AdminProducts = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
                       Không có sản phẩm nào
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => {
+                  paginatedProducts.map((product) => {
                     const hasDiscount = product.saleprice && product.saleprice < product.price;
                     return (
                     <tr key={product.id} className="hover:bg-slate-50 transition-colors">
@@ -99,7 +147,7 @@ const AdminProducts = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={product.imageUrl || 'https://via.placeholder.com/48'}
+                            src={getImageUrl(product.imageUrl)}
                             alt={product.name}
                             className="w-12 h-12 rounded-lg object-cover border border-slate-200 bg-white"
                           />
@@ -148,6 +196,48 @@ const AdminProducts = () => {
             </table>
           )}
         </div>
+
+        {/* Pagination */}
+        {filteredProducts.length > 0 && (
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến <span className="font-semibold">{Math.min(startIndex + itemsPerPage, filteredProducts.length)}</span> trong <span className="font-semibold">{filteredProducts.length}</span> kết quả
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      page === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

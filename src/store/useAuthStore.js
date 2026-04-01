@@ -16,7 +16,9 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
         try {
           const response = await api.post('/auth/login', { email, password });
-          const { user, token } = response;
+          // Backend return format: { message, user, token, token_type }
+          const user = response.user || response;
+          const token = response.token;
           localStorage.setItem('auth_token', token);
           set({ 
             user, 
@@ -37,7 +39,9 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
         try {
           const response = await api.post('/auth/register', userData);
-          const { user, token } = response;
+          // Backend return format: { message, user, token }
+          const user = response.user || response;
+          const token = response.token;
           localStorage.setItem('auth_token', token);
           set({ 
             user, 
@@ -64,8 +68,9 @@ export const useAuthStore = create(
         set({ loading: true });
         try {
           const response = await api.get('/auth/me');
+          const userData = response.user || response.data || response;
           set({ 
-            user: response.data || response,
+            user: userData,
             isAuthenticated: true,
             loading: false 
           });
@@ -95,8 +100,10 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
         try {
           const response = await api.put('/auth/profile', profileData);
+          // Backend return format: { message, user: {...} }
+          const userData = response.user || response.data || response;
           set({ 
-            user: response.user || response.data || response,
+            user: userData,
             loading: false 
           });
           return { success: true };
