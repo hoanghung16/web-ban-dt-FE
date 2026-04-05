@@ -22,7 +22,14 @@ export const getApiBaseUrl = () => {
     const hostname = window.location.hostname;
 
     // Convert frontend domain to backend domain
+    // web-ban-dt-fe.onrender.com → web-ban-dt-be.onrender.com
     // web-ban-dt-frontend.onrender.com → web-ban-dt-backend.onrender.com
+    if (hostname.includes('fe.onrender.com')) {
+      const backendHost = hostname.replace('-fe.onrender.com', '-be.onrender.com');
+      console.log(`[Config] Auto-detected backend: ${protocol}//${backendHost}`);
+      return `${protocol}//${backendHost}`;
+    }
+    
     if (hostname.includes('frontend')) {
       const backendHost = hostname.replace('frontend', 'backend');
       console.log(`[Config] Auto-detected backend: ${protocol}//${backendHost}`);
