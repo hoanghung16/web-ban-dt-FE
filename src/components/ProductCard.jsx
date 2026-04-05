@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCartStore } from '../store/useCartStore';
+import { getImageUrl } from '../utils/imageHelper';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
@@ -37,7 +38,8 @@ const ProductCard = ({ product }) => {
 
       <div className="relative aspect-square overflow-hidden bg-[#111111] p-8 flex flex-col items-center justify-center">
         <img
-          src={(product.imageUrl && product.imageUrl.startsWith('/')) ? `http://localhost:8000${product.imageUrl}` : (product.imageUrl ? `http://localhost:8000/images/products/${product.imageUrl}` : (product.image || product.img || ''))}
+          src={getImageUrl(product.imageUrl || product.image || product.img)}
+          alt={product.name}
         />
         
         {/* Quick Buy Overlay */}
